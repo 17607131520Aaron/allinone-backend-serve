@@ -16,5 +16,6 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
   const prompt = process.env.SERVICE_PORT ?? 3000;
   await app.listen(prompt);
+  console.log(`Application is running on: http://localhost:${prompt}`);
 }
 void bootstrap();
