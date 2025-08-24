@@ -3,7 +3,7 @@ import { IUserInfoService } from '@/services/interfaces/userinfo.interface';
 
 @Injectable()
 export class UserInfoServiceImpl implements IUserInfoService {
-  public getUserInfo() {
+  public getUserInfo(): UserInfoResponseDto {
     return {
       username: 'admin',
       password: '123456',
