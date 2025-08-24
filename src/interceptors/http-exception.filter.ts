@@ -8,7 +8,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { AppHttpException, APP_ERROR_CODES } from '../errors/common-errors';
+import { AppHttpException, APP_ERROR_CODES } from '../commn/common-errors';
 
 @Injectable()
 @Catch()

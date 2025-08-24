@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { DtoTransformInterceptor } from './interceptors/dto-transform.interceptor';
 import { GlobalResponseWrapperInterceptor } from '@/interceptors/global-response.interceptor';
-import { HttpExceptionFilter } from '@/filters/http-exception.filter';
+import { HttpExceptionFilter } from '@/interceptors/http-exception.filter';
 import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { UserModule } from '@/modules/user.modules';
 
