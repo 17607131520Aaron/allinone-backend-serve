@@ -1,6 +1,6 @@
 import { HttpStatus, HttpException } from '@nestjs/common';
 
-export const AppErrorCodes = {
+export const APP_ERROR_CODES = {
   VALIDATION_ERROR: { code: 1001, message: '参数无效' },
   MISSING_PARAMETER: { code: 1002, message: '缺少必填参数' },
   UNAUTHORIZED: { code: 1003, message: '未授权' },
@@ -17,7 +17,7 @@ export const AppErrorCodes = {
   UNKNOWN_ERROR: { code: 9999, message: '未知错误' },
 } as const;
 
-type ErrorCodeValue = (typeof AppErrorCodes)[keyof typeof AppErrorCodes];
+type ErrorCodeValue = (typeof APP_ERROR_CODES)[keyof typeof APP_ERROR_CODES];
 
 export class AppHttpException extends HttpException {
   constructor(

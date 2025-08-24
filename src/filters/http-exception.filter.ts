@@ -8,7 +8,7 @@ import {
   Inject,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { AppHttpException, AppErrorCodes } from '../errors/common-errors';
+import { AppHttpException, APP_ERROR_CODES } from '../errors/common-errors';
 
 @Injectable()
 @Catch()
@@ -22,13 +22,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // Initialize defaults
     let status: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     let code: number;
-    let message: string = AppErrorCodes.UNKNOWN_ERROR.message;
+    let message: string = APP_ERROR_CODES.UNKNOWN_ERROR.message;
 
     if (exception instanceof AppHttpException) {
       // Enterprise known error with explicit code
       code = exception.getCode();
       status = exception.getStatus ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-      message = exception.message ?? AppErrorCodes.UNKNOWN_ERROR.message;
+      message = exception.message ?? APP_ERROR_CODES.UNKNOWN_ERROR.message;
     } else if (exception instanceof HttpException) {
       // Nest HttpException but not our AppHttpException
       status = exception.getStatus ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
@@ -39,12 +39,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       };
       code = hasGetCode(exAny)
         ? (exAny as { getCode: () => number }).getCode()
-        : (this.defaultErrorCode ?? AppErrorCodes.INTERNAL_ERROR.code);
-      message = (exception as HttpException).message ?? AppErrorCodes.INTERNAL_ERROR.message;
+        : (this.defaultErrorCode ?? APP_ERROR_CODES.INTERNAL_ERROR.code);
+      message = (exception as HttpException).message ?? APP_ERROR_CODES.INTERNAL_ERROR.message;
     } else {
       // Unknown error
-      code = AppErrorCodes.UNKNOWN_ERROR.code;
-      message = AppErrorCodes.UNKNOWN_ERROR.message;
+      code = APP_ERROR_CODES.UNKNOWN_ERROR.code;
+      message = APP_ERROR_CODES.UNKNOWN_ERROR.message;
       status = HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
