@@ -4,13 +4,9 @@ import { map } from 'rxjs/operators';
 
 @Injectable()
 export class GlobalResponseWrapperInterceptor implements NestInterceptor {
-  constructor(
-    @Inject('DEFAULT_SUCCESS_CODE') private readonly defaultSuccessCode: number,
-    @Inject('DEFAULT_ERROR_CODE') private readonly defaultErrorCode: number,
-  ) {}
+  constructor(@Inject('DEFAULT_SUCCESS_CODE') private readonly defaultSuccessCode: number) {}
 
   public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
-    const timestamp = new Date().toISOString();
     return next.handle().pipe(
       map((data: unknown) => {
         if (
@@ -27,7 +23,6 @@ export class GlobalResponseWrapperInterceptor implements NestInterceptor {
           code: this.defaultSuccessCode ?? 0,
           data: payload,
           message: 'success',
-          date: timestamp,
         };
       }),
     );

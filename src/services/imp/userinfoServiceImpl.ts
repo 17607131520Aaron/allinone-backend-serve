@@ -1,14 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { IUserInfoService } from '@/services/interfaces/userinfo.interface';
 
 @Injectable()
 export class UserInfoServiceImpl implements IUserInfoService {
-  public getUserInfo(): UserInfoResponseDto {
-    return {
-      username: 'admin',
-      password: '123456',
-      type: '12312313',
-    };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public getUserInfo(): any {
+    // Example: throw an exception to test global error handling
+    throw new BadRequestException('获取用户信息失败');
   }
 
   public registerUser(): string {
