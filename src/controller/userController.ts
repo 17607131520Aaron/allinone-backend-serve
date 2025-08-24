@@ -1,17 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { Controller, Get, Post } from '@nestjs/common';
-import { UserInfoService } from '@/services/userinfoServices';
+import { Controller, Get, Post, Inject } from '@nestjs/common';
+import type { IUserInfoService } from '@/services/interfaces/userinfo.interface';
 
 @Controller('userinfo')
 export class UserController {
-  constructor(private readonly userinfoService: UserInfoService) {}
+  constructor(@Inject('IUserInfoService') private readonly userinfoService: IUserInfoService) {}
   @Get('getUserInfo')
-  public getUserInfo(): any {
+  public getUserInfo(): { username: string; password: string } {
     return this.userinfoService.getUserInfo();
   }
 
   @Post('registerUser')
-  public registerUser(): any {
+  public registerUser(): string {
     return this.userinfoService.registerUser();
   }
 }
