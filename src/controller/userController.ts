@@ -1,10 +1,10 @@
 import { Controller, Get, Post, Inject, Body } from '@nestjs/common';
-import type { IUserInfoService } from '@/services/interfaces/userinfo.interface';
+import type { UserInfoServiceImpl } from '@/services/userinfoServiceImpl';
 import { UserInfoResponseDto, UserInfoDto } from '@/dto/userinfo.dto';
 
 @Controller('userinfo')
 export class UserController {
-  constructor(@Inject('IUserInfoService') private readonly userinfoService: IUserInfoService) {}
+  constructor(@Inject('IUserInfoService') private readonly userinfoService: UserInfoServiceImpl) {}
 
   @Get('getUserInfo')
   public async getUserInfo(): Promise<UserInfoResponseDto> {

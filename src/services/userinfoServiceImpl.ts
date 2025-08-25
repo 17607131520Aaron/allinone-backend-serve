@@ -2,12 +2,11 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IUserInfoService } from '@/services/interfaces/userinfo.interface';
 import { UserInfoResponseDto, UserInfoDto } from '@/dto/userinfo.dto';
 import { User } from '@/entity/user.entity';
 
 @Injectable()
-export class UserInfoServiceImpl implements IUserInfoService {
+export class UserInfoServiceImpl{
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,

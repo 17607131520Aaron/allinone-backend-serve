@@ -31,7 +31,9 @@ services:
       - redis # 依赖Redis服务（非本地development环境使用）
       - mysql # 依赖MySQL服务（非本地development环境使用）
     networks:
-      - app-network
+      - mysql-net
+      - redis-net
+      - rabbitmq-net
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -47,7 +49,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
       - rabbitmq_logs:/var/log/rabbitmq
     networks:
-      - app-network
+      - rabbitmq-net
 
   mysql:
     image: mysql:8.0
@@ -65,7 +67,7 @@ services:
       timeout: 3s
       retries: 30
     networks:
-      - app-network
+      - mysql-net
 
   redis:
     image: redis:7-alpine
@@ -82,7 +84,7 @@ services:
       timeout: 3s
       retries: 30
     networks:
-      - app-network
+      - redis-net
 
 volumes:
   rabbitmq_data:
@@ -91,5 +93,9 @@ volumes:
   mysql_data:
 
 networks:
-  app-network:
+  mysql-net:
+    driver: bridge
+  redis-net:
+    driver: bridge
+  rabbitmq-net:
     driver: bridge
