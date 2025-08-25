@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DtoTransformInterceptor } from './interceptors/dto-transform.interceptor';
 import { GlobalResponseWrapperInterceptor } from '@/interceptors/global-response.interceptor';
@@ -13,6 +13,14 @@ import { databaseConfig } from '@/configs/database.config';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
+      load: [
+        () => {
+          const env = process.env.NODE_ENV || 'development';
+          console.log(`[ConfigModule] Loading environment: ${env}`);
+          console.log(`[ConfigModule] Looking for files: .env.${env}, .env`);
+          return {};
+        },
+      ],
     }),
     TypeOrmModule.forRoot(databaseConfig), // 全局配置数据库连接
     UserModule,
@@ -27,4 +35,13 @@ import { databaseConfig } from '@/configs/database.config';
     { provide: 'DEFAULT_ERROR_CODE', useValue: 9000 },
   ],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  public onModuleInit(): void {
+    console.log('\n✅ MySQL数据库连接成功！');
+    console.log(`📊 数据库: ${process.env.MYSQL_DATABASE}`);
+    console.log(`🌐 连接地址: ${process.env.NODE_MYSQL_HOST}:${process.env.MYSQL_PORT}`);
+    console.log(`👤 用户名: ${process.env.MYSQL_USERNAME}`);
+    console.log(`🔐 端口: ${process.env.MYSQL_PORT}`);
+    console.log('========================\n');
+  }
+}
