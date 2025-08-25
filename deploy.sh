@@ -9,7 +9,7 @@ set -euo pipefail
 #   ./deploy.sh up                    # build (if needed) and start
 #   ./deploy.sh build                 # build image only
 #   ./deploy.sh down                  # stop and remove
-#   ./deploy.sh test                  # build test image and clean containers/networks
+#   ./deploy.sh test                  # clean, build test image, then start services
 #   ./deploy.sh restart               # restart services
 #   ./deploy.sh logs                  # tail logs
 #   ./deploy.sh ps                    # list containers
@@ -52,7 +52,7 @@ Commands:
   up         Build (if needed) and start services in background
   build      Build docker image only
   down       Stop and remove services
-  test       Build image with NODE_ENV=test, then remove containers/networks
+  test       Clean containers/networks, build with NODE_ENV=test, then start
   restart    Restart services
   logs       Tail app and rabbitmq logs
   ps         Show compose services
@@ -63,6 +63,8 @@ Options (env or flags):
   -p, --port <port>       SERVICE_PORT (default: 9000)
   -i, --image <name>      Base image name (default: allinone-backend-serve)
   -t, --tag <tag>         Image tag (default: date+git short sha if available)
+Notes:
+  If .env.<env> exists (e.g., .env.test), it will be auto-loaded and passed to compose.
 EOF
       exit 0 ;;
     *)
@@ -131,14 +133,68 @@ build_image() {
     .
 }
 
+remove_containers_if_exist() {
+  # Remove containers that would conflict by name or old app image
+  echo "Checking for existing containers to remove..."
+  local names=(rabbitmq mysql redis)
+  for n in "${names[@]}"; do
+    if docker ps -a --format '{{.Names}}' | grep -E "^${n}$" >/dev/null 2>&1; then
+      echo "Removing existing container: $n"
+      docker rm -f "$n" || true
+    fi
+  done
+  # Remove any containers created from older images of this app (base match)
+  if docker ps -a --filter "ancestor=${IMAGE_BASE}" -q | grep . >/dev/null 2>&1; then
+    echo "Removing containers using image ancestor ${IMAGE_BASE}"
+    docker rm -f $(docker ps -a --filter "ancestor=${IMAGE_BASE}" -q) || true
+  fi
+}
+
+print_endpoints() {
+  echo "\nEndpoints:"
+  local host="localhost"
+  local app_port="$SERVICE_PORT"
+  local rmq_mgmt_port=15672
+  local rmq_amqp_port=5672
+  local redis_port="${REDIS_HOST_PORT:-6379}"
+  local mysql_port="${MYSQL_HOST_PORT:-3306}"
+
+  # Attempt to read overrides from env file for printing only
+  local env_file=".env.${NODE_ENV}"
+  if [[ -f "$env_file" ]]; then
+    # shellcheck disable=SC1090
+    set -a; source "$env_file"; set +a
+    app_port="${SERVICE_PORT:-$app_port}"
+    redis_port="${REDIS_HOST_PORT:-${REDIS_PORT:-$redis_port}}"
+    mysql_port="${MYSQL_HOST_PORT:-${MYSQL_PORT:-$mysql_port}}"
+  fi
+
+  echo "  App:       http://${host}:${app_port}"
+  echo "  RabbitMQ:  http://${host}:${rmq_mgmt_port} (mgmt), amqp://${host}:${rmq_amqp_port} (AMQP)"
+  echo "  Redis:     redis://${host}:${redis_port}"
+  echo "  MySQL:     ${host}:${mysql_port}"
+}
+
 compose_up() {
   echo "Starting services with docker compose..."
-  "${COMPOSE[@]}" up -d
+  # If an env file exists for current NODE_ENV, pass it to compose so SERVICE_PORT stays consistent
+  ENV_FILE=".env.${NODE_ENV}"
+  if [[ -f "$ENV_FILE" ]]; then
+    echo "Using env file: $ENV_FILE"
+    "${COMPOSE[@]}" --env-file "$ENV_FILE" up -d
+  else
+    "${COMPOSE[@]}" up -d
+  fi
 }
 
 compose_down() {
   echo "Stopping and removing services..."
-  "${COMPOSE[@]}" down
+  ENV_FILE=".env.${NODE_ENV}"
+  if [[ -f "$ENV_FILE" ]]; then
+    "${COMPOSE[@]}" --env-file "$ENV_FILE" down
+  else
+    "${COMPOSE[@]}" down
+  fi
 }
 
 compose_logs() {
@@ -157,25 +213,34 @@ cleanup() {
 
 case "$command" in
   build)
+    remove_containers_if_exist
     build_image
     ;;
   up)
+    remove_containers_if_exist
     build_image
     compose_up
     compose_ps
+    print_endpoints
     ;;
   down)
     compose_down
     ;;
   test)
-    build_image
     compose_down
-    ;;
-  restart)
-    compose_down
+    remove_containers_if_exist
     build_image
     compose_up
     compose_ps
+    print_endpoints
+    ;;
+  restart)
+    compose_down
+    remove_containers_if_exist
+    build_image
+    compose_up
+    compose_ps
+    print_endpoints
     ;;
   logs)
     compose_logs

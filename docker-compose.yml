@@ -15,8 +15,21 @@ services:
       RABBITMQ_PORT: 5672 # RabbitMQ端口
       RABBITMQ_USERNAME: guest # RabbitMQ用户名
       RABBITMQ_PASSWORD: guest # RabbitMQ密码
+      # Redis 连接到容器内实例（非本地development环境）
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      # 如需密码，设置 REDIS_PASSWORD 并在 redis 服务启用 requirepass
+      # 非本地development环境，应用连接容器内的 MySQL 实例
+      NODE_MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USERNAME: root
+      MYSQL_PASSWORD: example
+      MYSQL_DATABASE: allinone_backend
     depends_on:
       - rabbitmq # 依赖RabbitMQ服务
+      - redis # 依赖Redis服务（非本地development环境使用）
+      - mysql # 依赖MySQL服务（非本地development环境使用）
     networks:
       - app-network
 
@@ -36,9 +49,46 @@ services:
     networks:
       - app-network
 
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: allinone_backend
+    ports:
+      - '${MYSQL_HOST_PORT:-3306}:3306' # 仅容器间访问可移除此行
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-pexample']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - '${REDIS_HOST_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    # 如需密码，取消命令注释并同时为 app 设置 REDIS_PASSWORD
+    # command: ["redis-server", "--appendonly", "yes", "--requirepass", "your_password"]
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    networks:
+      - app-network
+
 volumes:
   rabbitmq_data:
   rabbitmq_logs:
+  redis_data:
+  mysql_data:
 
 networks:
   app-network:
