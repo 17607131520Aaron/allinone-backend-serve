@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Inject, Body } from '@nestjs/common';
 import type { IUserInfoService } from '@/services/interfaces/userinfo.interface';
-import { UserInfoResponseDto } from '@/dto/userinfo.dto';
+import { UserInfoResponseDto, UserInfoDto } from '@/dto/userinfo.dto';
 
 @Controller('userinfo')
 export class UserController {
@@ -9,6 +9,12 @@ export class UserController {
   public getUserInfo(): UserInfoResponseDto {
     // 返回原始对象，由全局 DTO 映射拦截器处理
     return this.userinfoService.getUserInfo();
+  }
+
+  //用户登录接口
+  @Post('userLogin')
+  public async userLogin(@Body() userInfoDto: UserInfoDto) {
+    return '登录成功';
   }
 
   @Post('registerUser')
