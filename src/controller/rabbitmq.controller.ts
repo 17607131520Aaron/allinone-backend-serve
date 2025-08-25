@@ -1,13 +1,6 @@
-import { Controller, Post, Get, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, Logger, BadRequestException } from '@nestjs/common';
 import { RabbitMQService } from '@/services/rabbitmq.service';
 import { ROUTING_KEYS } from '@/configs/rabbitmq.config';
-
-// 控制器通用返回类型
-interface IApiResponse<T> {
-  success: boolean;
-  data: T;
-  message: string;
-}
 
 @Controller('rabbitmq')
 export class RabbitMQController {
@@ -18,29 +11,19 @@ export class RabbitMQController {
   /**
    * 测试RabbitMQ连接状态
    */
-  @Get('status')
-  public async getStatus(): Promise<IApiResponse<{ connected: boolean; timestamp: string }>> {
+  @Get('test/status')
+  public async getStatus(): Promise<{ connected: boolean; timestamp: string; message: string }> {
     try {
       const isConnected = await this.rabbitMQService.getConnectionStatus();
       return {
-        success: true,
-        data: {
-          connected: isConnected,
-          timestamp: new Date().toISOString(),
-        },
+        connected: isConnected,
+        timestamp: new Date().toISOString(),
         message: isConnected ? 'RabbitMQ连接正常' : 'RabbitMQ连接异常',
       };
     } catch (error: unknown) {
       const err = error as Error;
       this.logger.error(`获取RabbitMQ状态失败: ${err.message}`);
-      return {
-        success: false,
-        data: {
-          connected: false,
-          timestamp: new Date().toISOString(),
-        },
-        message: `RabbitMQ状态检查失败: ${err.message}`,
-      };
+      throw new BadRequestException(`获取RabbitMQ状态失败: ${err.message}`);
     }
   }
 
@@ -50,7 +33,7 @@ export class RabbitMQController {
   @Post('test/user')
   public async testUserMessage(
     @Body() body: { message?: string },
-  ): Promise<IApiResponse<Record<string, unknown>>> {
+  ): Promise<Record<string, unknown>> {
     try {
       const testMessage: Record<string, unknown> = {
         id: Date.now(),
@@ -61,19 +44,11 @@ export class RabbitMQController {
 
       await this.rabbitMQService.publishUserMessage(ROUTING_KEYS.USER_CREATED, testMessage);
 
-      return {
-        success: true,
-        data: testMessage,
-        message: '测试用户消息已发送到用户队列',
-      };
+      return testMessage;
     } catch (error: unknown) {
       const err = error as Error;
       this.logger.error(`发送测试用户消息失败: ${err.message}`);
-      return {
-        success: false,
-        data: {},
-        message: `发送测试用户消息失败: ${err.message}`,
-      };
+      throw new BadRequestException(`发送测试用户消息失败: ${err.message}`);
     }
   }
 
@@ -83,7 +58,7 @@ export class RabbitMQController {
   @Post('test/notification')
   public async testNotificationMessage(
     @Body() body: { message?: string },
-  ): Promise<IApiResponse<Record<string, unknown>>> {
+  ): Promise<Record<string, unknown>> {
     try {
       const testMessage: Record<string, unknown> = {
         id: Date.now(),
@@ -97,19 +72,11 @@ export class RabbitMQController {
         testMessage,
       );
 
-      return {
-        success: true,
-        data: testMessage,
-        message: '测试通知消息已发送到通知队列',
-      };
+      return testMessage;
     } catch (error: unknown) {
       const err = error as Error;
       this.logger.error(`发送测试通知消息失败: ${err.message}`);
-      return {
-        success: false,
-        data: {},
-        message: `发送测试通知消息失败: ${err.message}`,
-      };
+      throw new BadRequestException(`发送测试通知消息失败: ${err.message}`);
     }
   }
 
@@ -119,7 +86,7 @@ export class RabbitMQController {
   @Post('test/email')
   public async testEmailMessage(
     @Body() body: { message?: string },
-  ): Promise<IApiResponse<Record<string, unknown>>> {
+  ): Promise<Record<string, unknown>> {
     try {
       const testMessage: Record<string, unknown> = {
         id: Date.now(),
@@ -130,19 +97,11 @@ export class RabbitMQController {
 
       await this.rabbitMQService.publishEmailMessage(ROUTING_KEYS.EMAIL_SENT, testMessage);
 
-      return {
-        success: true,
-        data: testMessage,
-        message: '测试邮件消息已发送到邮件队列',
-      };
+      return testMessage;
     } catch (error: unknown) {
       const err = error as Error;
       this.logger.error(`发送测试邮件消息失败: ${err.message}`);
-      return {
-        success: false,
-        data: {},
-        message: `发送测试邮件消息失败: ${err.message}`,
-      };
+      throw new BadRequestException(`发送测试邮件消息失败: ${err.message}`);
     }
   }
 
@@ -152,7 +111,7 @@ export class RabbitMQController {
   @Post('test/log')
   public async testLogMessage(
     @Body() body: { message?: string },
-  ): Promise<IApiResponse<Record<string, unknown>>> {
+  ): Promise<Record<string, unknown>> {
     try {
       const testMessage: Record<string, unknown> = {
         id: Date.now(),
@@ -164,19 +123,11 @@ export class RabbitMQController {
 
       await this.rabbitMQService.publishLogMessage(ROUTING_KEYS.LOG_CREATED, testMessage);
 
-      return {
-        success: true,
-        data: testMessage,
-        message: '测试日志消息已发送到日志队列',
-      };
+      return testMessage;
     } catch (error: unknown) {
       const err = error as Error;
       this.logger.error(`发送测试日志消息失败: ${err.message}`);
-      return {
-        success: false,
-        data: {},
-        message: `发送测试日志消息失败: ${err.message}`,
-      };
+      throw new BadRequestException(`发送测试日志消息失败: ${err.message}`);
     }
   }
 }
