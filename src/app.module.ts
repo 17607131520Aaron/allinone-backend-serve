@@ -10,7 +10,10 @@ import { databaseConfig } from '@/configs/database.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: [`.env.${process.env.NODE_ENV || 'development'}`, '.env'],
+    }),
     TypeOrmModule.forRoot(databaseConfig), // 全局配置数据库连接
     UserModule,
   ],
