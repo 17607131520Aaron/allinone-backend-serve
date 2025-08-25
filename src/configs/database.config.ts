@@ -16,8 +16,7 @@ export const databaseConfig: TypeOrmModuleOptions = {
   // 连接池配置
   extra: {
     connectionLimit: 10,
-    acquireTimeout: 60000,
-    timeout: 60000,
+    connectTimeout: 60000,
   },
   // 重试配置
   retryAttempts: 3, // 重试次数

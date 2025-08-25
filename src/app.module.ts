@@ -8,6 +8,7 @@ import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { UserModule } from '@/modules/user.modules';
 import { RedisModule } from '@/configs/redis';
 import { databaseConfig } from '@/configs/database.config';
+import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { databaseConfig } from '@/configs/database.config';
     TypeOrmModule.forRoot(databaseConfig), // 全局配置数据库连接
     RedisModule, // Redis模块
     UserModule,
+    RabbitMQAppModule, // RabbitMQ模块
   ],
   controllers: [],
   providers: [
@@ -51,6 +53,13 @@ export class AppModule implements OnModuleInit {
       `🌐 Redis地址: ${process.env.REDIS_HOST || 'localhost'}:${process.env.REDIS_PORT || '6379'}`,
     );
     console.log(`🗄️ Redis数据库: ${process.env.REDIS_DB || '0'}`);
+    console.log('========================\n');
+
+    console.log('✅ RabbitMQ模块已加载！');
+    console.log(
+      `🌐 RabbitMQ地址: ${process.env.RABBITMQ_HOST || 'localhost'}:${process.env.RABBITMQ_PORT || '5672'}`,
+    );
+    console.log(`👤 用户名: ${process.env.RABBITMQ_USERNAME || 'guest'}`);
     console.log('========================\n');
   }
 }
