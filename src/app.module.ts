@@ -4,11 +4,13 @@ import { DtoTransformInterceptor } from './interceptors/dto-transform.intercepto
 import { GlobalResponseWrapperInterceptor } from '@/interceptors/global-response.interceptor';
 import { HttpExceptionFilter } from '@/interceptors/http-exception.interceptor';
 import { ConfigModule } from '@nestjs/config';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { JwtExpiryGuard } from '@/guards/jwt-exp.guard';
 import { UserModule } from '@/modules/user.modules';
 import { RedisModule } from '@/configs/redis';
 import { databaseConfig } from '@/configs/database.config';
 import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
   imports: [
@@ -28,6 +30,7 @@ import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
     RedisModule, // Redis模块
     UserModule,
     RabbitMQAppModule, // RabbitMQ模块
+    AuthModule,
   ],
   controllers: [],
   providers: [
@@ -37,6 +40,7 @@ import { RabbitMQAppModule } from '@/modules/rabbitmq.module';
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: 'DEFAULT_SUCCESS_CODE', useValue: 0 },
     { provide: 'DEFAULT_ERROR_CODE', useValue: 9000 },
+    { provide: APP_GUARD, useClass: JwtExpiryGuard },
   ],
 })
 export class AppModule implements OnModuleInit {

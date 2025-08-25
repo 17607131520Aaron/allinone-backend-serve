@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
+import bcrypt from 'bcryptjs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IUserInfoService } from '@/services/interfaces/userinfo.interface';
@@ -47,10 +48,11 @@ export class UserInfoServiceImpl implements IUserInfoService {
         return '用户已存在';
       }
 
-      // 创建新用户
+      // 创建新用户（使用哈希密码）
+      const hashed = await bcrypt.hash('123456', 10);
       const newUser = this.userRepository.create({
         username: 'admin',
-        password: '123456',
+        password: hashed,
         email: 'admin@example.com',
         status: 1,
       });
@@ -64,16 +66,13 @@ export class UserInfoServiceImpl implements IUserInfoService {
 
   public async userLogin(userInfoDto: UserInfoDto): Promise<string> {
     try {
-      // 从数据库验证用户登录
+      // 从数据库验证用户登录（哈希校验）
       const user = await this.userRepository.findOne({
-        where: { username: userInfoDto.username, password: userInfoDto.password },
+        where: { username: userInfoDto.username, status: 1 },
       });
-
-      if (user) {
-        return '登录成功';
-      }
-
-      return '用户名或密码错误';
+      if (!user) return '用户名或密码错误';
+      const ok = await bcrypt.compare(userInfoDto.password, user.password);
+      return ok ? '登录成功' : '用户名或密码错误';
     } catch (error) {
       throw new BadRequestException('登录失败: ' + (error as Error).message);
     }
