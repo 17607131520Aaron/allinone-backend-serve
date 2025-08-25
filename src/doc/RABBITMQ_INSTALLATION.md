@@ -95,20 +95,18 @@
 1. **启动你的应用**
 
    ```bash
-   pnpm run dev
+   pnpm dev
    ```
 
 2. **测试 RabbitMQ 状态**
 
    ```bash
-   curl http://localhost:9998/rabbitmq/status
+   curl http://localhost:9000/rabbitmq/test/status | cat
    ```
 
 3. **发送测试消息**
    ```bash
-   curl -X POST http://localhost:9998/rabbitmq/test/user \
-     -H "Content-Type: application/json" \
-     -d '{"message": "Hello RabbitMQ!"}'
+   curl -X POST http://localhost:9000/rabbitmq/test/user -H 'Content-Type: application/json' -d '{"message":"Hello RabbitMQ!"}' | cat
    ```
 
 ## 🔍 故障排除

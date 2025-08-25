@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: `asp-xms-service-${process.env.NODE_ENV || 'production'}`, // 动态设置服务名称
+      name: `allinone-backend-serve-${process.env.NODE_ENV || 'production'}`, // 动态设置服务名称
       script: 'dist/main.js',
       env: {
         NODE_ENV: process.env.NODE_ENV || 'production', // 动态设置环境变量

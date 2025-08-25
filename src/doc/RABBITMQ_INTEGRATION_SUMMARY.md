@@ -4,23 +4,22 @@
 
 ✅ **RabbitMQ 已成功集成到你的 NestJS 项目中！**
 
-## 📁 新增文件结构
+## 📁 文件结构
 
 ```
 src/
 ├── configs/
-│   └── rabbitmq.config.ts          # RabbitMQ配置
+│   └── rabbitmq.config.ts
 ├── modules/
-│   └── rabbitmq/
-│       ├── rabbitmq.module.ts      # RabbitMQ模块
-│       ├── rabbitmq.service.ts     # RabbitMQ服务
-│       └── rabbitmq.controller.ts  # RabbitMQ控制器
-├── doc/
-│   └── RABBITMQ_SETUP.md          # 详细使用说明
-└── app.module.ts                   # 已更新，集成RabbitMQ模块
+│   └── rabbitmq.module.ts
+├── services/
+│   └── rabbitmq.service.ts
+├── controller/
+│   └── rabbitmq.controller.ts
+└── app.module.ts
 
-docker-compose.yml                  # 已更新，添加RabbitMQ服务
-start-rabbitmq.sh                   # RabbitMQ启动脚本
+docker-compose.yml
+start-rabbitmq.sh
 ```
 
 ## 🚀 快速开始
@@ -44,13 +43,8 @@ pnpm run dev
 ### 3. 测试 RabbitMQ 连接
 
 ```bash
-# 检查连接状态
-curl http://localhost:9000/rabbitmq/status
-
-# 发送测试消息
-curl -X POST http://localhost:9000/rabbitmq/test/user \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Hello RabbitMQ!"}'
+curl http://localhost:9000/rabbitmq/test/status | cat
+curl -X POST http://localhost:9000/rabbitmq/test/user -H 'Content-Type: application/json' -d '{"message":"Hello RabbitMQ!"}' | cat
 ```
 
 ## 🔧 主要功能

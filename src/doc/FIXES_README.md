@@ -83,12 +83,12 @@ npm run test:entity
 确保在项目根目录创建 `.env` 文件，参考 `env.example`：
 
 ```bash
-# 数据库配置
-DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=your_password
-DB_DATABASE=allinone_db
+# 数据库配置（与 src/configs/database.config.ts 一致）
+NODE_MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USERNAME=root
+MYSQL_PASSWORD=your_password
+MYSQL_DATABASE=allinone_backend
 ```
 
 ## ✨ 修复后的特性

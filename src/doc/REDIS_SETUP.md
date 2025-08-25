@@ -1,131 +1,49 @@
-# Redis 配置说明
+# Redis 模块与接口
 
-## 环境变量配置
+模块位于 `src/configs/redis/`，基于 ioredis 实现连接与健康检查，提供管理与读写接口。
 
-在 `.env` 文件中添加以下Redis配置：
-
-```bash
-# Redis配置
-REDIS_HOST=localhost          # Redis服务器地址
-REDIS_PORT=6379              # Redis端口
-REDIS_PASSWORD=               # Redis密码（如果有）
-REDIS_DB=0                   # Redis数据库编号
-```
-
-## 功能特性
-
-### 1. 自动连接管理
-
-- 应用启动时自动连接Redis
-- 连接失败时自动重试
-- 支持连接池和重连机制
-
-### 2. 健康检查
-
-- 定期检查Redis连接状态
-- 实时监控连接健康状态
-- 自动重连机制
-
-### 3. 完整的Redis操作API
-
-- 基础操作：set, get, del, exists, expire, ttl
-- 哈希操作：hset, hget, hdel, hgetall
-- 列表操作：lpush, rpush, lpop, rpop, lrange
-- 集合操作：sadd, srem, smembers, sismember
-- 有序集合：zadd, zrem, zrange, zscore
-
-### 4. 监控接口
-
-#### 健康检查
+## 环境变量
 
 ```bash
-GET /redis/health
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
 ```
 
-#### 连接状态
+Docker Compose 中应用容器会使用 `redis` 作为主机名。
 
-```bash
-GET /redis/status
-```
+## 关键文件
 
-#### Redis信息
+- `src/configs/redis/redis.module.ts`
+- `src/configs/redis/redis.service.ts`
+- `src/configs/redis/redis.controller.ts`
+- `src/configs/redis.config.ts`（连接与健康检查配置、常量）
 
-```bash
-GET /redis/info
-```
+## 提供的接口（Controller 前缀 `/redis`）
 
-#### 测试Redis操作
+- `GET /redis/health`
+- `GET /redis/status`
+- `GET /redis/info`
+- `GET /redis/memory`
+- `POST /redis/test`（body: `{ key, value, ttl? }`）
+- `GET /redis/keys/:pattern`
+- `DELETE /redis/keys/:key`
 
-```bash
-POST /redis/test
-{
-  "key": "test_key",
-  "value": "test_value",
-  "ttl": 3600
-}
-```
-
-#### 查询键
-
-```bash
-GET /redis/keys/*
-```
-
-#### 删除键
-
-```bash
-DELETE /redis/keys/test_key
-```
-
-#### 内存使用情况
-
-```bash
-GET /redis/memory
-```
-
-## 使用方法
-
-### 在其他服务中注入Redis服务
+## 在服务中使用
 
 ```typescript
-import { Injectable } from '@nestjs/common';
-import { IRedisService } from '@/services/interfaces/redis.interface';
+import { Inject, Injectable } from '@nestjs/common';
+import type { IRedisService } from '@/configs/redis';
 
 @Injectable()
-export class YourService {
-  constructor(private readonly redisService: IRedisService) {}
-
-  async someMethod() {
-    // 设置缓存
-    await this.redisService.set('key', 'value', 3600);
-
-    // 获取缓存
-    const value = await this.redisService.get('key');
-
-    // 检查键是否存在
-    const exists = await this.redisService.exists('key');
-  }
+export class DemoService {
+  constructor(@Inject('IRedisService') private readonly redis: IRedisService) {}
 }
 ```
 
-## 注意事项
+## 常见问题
 
-1. Redis服务已设置为全局模块，无需在其他模块中导入
-2. 支持自动重连和健康检查
-3. 所有Redis操作都是异步的
-4. 建议在生产环境中设置Redis密码
-5. 可以通过环境变量调整连接超时和重试配置
-
-## 故障排除
-
-### 连接失败
-
-1. 检查Redis服务是否运行
-2. 验证环境变量配置
-3. 检查网络连接和防火墙设置
-
-### 性能问题
-
-1. 检查Redis内存使用情况
-2. 监控连接池状态
-3. 优化Redis配置参数
+- 连接失败：确认 Redis 已启动，端口与密码正确
+- 健康检查失败：查看应用日志，检查网络连通与 REDIS\_\* 配置
+- 生产安全：设置密码并限制网络范围
