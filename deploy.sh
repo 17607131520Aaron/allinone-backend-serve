@@ -18,6 +18,7 @@ set -euo pipefail
 # Options (env or flags):
 #   NODE_ENV=production               # --env/-e
 #   SERVICE_PORT=9000                 # --port/-p
+#   APP_HOST_PORT=9000               # --host-port/-P
 #   IMAGE_NAME=allinone-backend-serve # --image/-i (tag will be appended)
 #   TAG=<auto>                        # --tag/-t  (default uses date+shortsha)
 
@@ -27,6 +28,7 @@ cd "$ROOT_DIR"
 # Defaults
 NODE_ENV_DEFAULT="production"
 SERVICE_PORT_DEFAULT="9000"
+APP_HOST_PORT_DEFAULT=""
 IMAGE_BASE_DEFAULT="allinone-backend-serve"
 
 command="up"
@@ -42,6 +44,8 @@ while [[ $# -gt 0 ]]; do
       SERVICE_PORT="${2:-}"; shift 2 ;;
     --image|-i)
       IMAGE_BASE="${2:-}"; shift 2 ;;
+    --host-port|-P)
+      APP_HOST_PORT="${2:-}"; shift 2 ;;
     --tag|-t)
       TAG="${2:-}"; shift 2 ;;
     --help|-h)
@@ -61,6 +65,7 @@ Commands:
 Options (env or flags):
   -e, --env <env>         NODE_ENV (default: production)
   -p, --port <port>       SERVICE_PORT (default: 9000)
+  -P, --host-port <port>  Host port mapped to container SERVICE_PORT (default: same as SERVICE_PORT)
   -i, --image <name>      Base image name (default: allinone-backend-serve)
   -t, --tag <tag>         Image tag (default: date+git short sha if available)
 Notes:
@@ -94,9 +99,23 @@ if [[ "$command" == "test" ]]; then
   fi
 fi
 
+# Source env file early so build args and printed values reflect it
+ENV_FILE_EARLY=".env.${NODE_ENV:-$NODE_ENV_DEFAULT}"
+if [[ -f "$ENV_FILE_EARLY" ]]; then
+  # shellcheck disable=SC1090
+  set -a; source "$ENV_FILE_EARLY"; set +a
+fi
+
 # Resolve variables
 NODE_ENV="${NODE_ENV:-${NODE_ENV_DEFAULT}}"
 SERVICE_PORT="${SERVICE_PORT:-${SERVICE_PORT_DEFAULT}}"
+# Default host port to service port if not provided anywhere
+if [[ -z "${APP_HOST_PORT:-$APP_HOST_PORT_DEFAULT}" ]]; then
+  APP_HOST_PORT="$SERVICE_PORT"
+else
+  APP_HOST_PORT="${APP_HOST_PORT:-$APP_HOST_PORT_DEFAULT}"
+  if [[ -z "$APP_HOST_PORT" ]]; then APP_HOST_PORT="$SERVICE_PORT"; fi
+fi
 IMAGE_BASE="${IMAGE_BASE:-${IMAGE_BASE_DEFAULT}}"
 
 # Tag: prefer provided, else date+short sha if in git, else date
@@ -117,18 +136,30 @@ fi
 
 IMAGE_NAME="${IMAGE_BASE}:${IMAGE_TAG}"
 
-export NODE_ENV SERVICE_PORT IMAGE_NAME
+export NODE_ENV SERVICE_PORT APP_HOST_PORT IMAGE_NAME
 
 echo "Using settings:"
 echo "  NODE_ENV     = $NODE_ENV"
 echo "  SERVICE_PORT = $SERVICE_PORT"
 echo "  IMAGE_NAME   = $IMAGE_NAME"
+echo "  APP_HOST_PORT= $APP_HOST_PORT"
 
 build_image() {
   echo "\n[1/1] Building image $IMAGE_NAME..."
+  local build_args=(
+    --build-arg NODE_ENV="$NODE_ENV"
+    --build-arg SERVICE_PORT="$SERVICE_PORT"
+  )
+  # Forward proxy env vars if present so base image can be pulled behind proxy
+  if [[ -n "${HTTP_PROXY:-}" ]]; then build_args+=(--build-arg HTTP_PROXY="$HTTP_PROXY"); fi
+  if [[ -n "${HTTPS_PROXY:-}" ]]; then build_args+=(--build-arg HTTPS_PROXY="$HTTPS_PROXY"); fi
+  if [[ -n "${NO_PROXY:-}" ]]; then build_args+=(--build-arg NO_PROXY="$NO_PROXY"); fi
+  if [[ -n "${http_proxy:-}" ]]; then build_args+=(--build-arg http_proxy="$http_proxy"); fi
+  if [[ -n "${https_proxy:-}" ]]; then build_args+=(--build-arg https_proxy="$https_proxy"); fi
+  if [[ -n "${no_proxy:-}" ]]; then build_args+=(--build-arg no_proxy="$no_proxy"); fi
+
   docker build \
-    --build-arg NODE_ENV="$NODE_ENV" \
-    --build-arg SERVICE_PORT="$SERVICE_PORT" \
+    "${build_args[@]}" \
     -t "$IMAGE_NAME" \
     .
 }
@@ -153,7 +184,7 @@ remove_containers_if_exist() {
 print_endpoints() {
   echo "\nEndpoints:"
   local host="localhost"
-  local app_port="$SERVICE_PORT"
+  local app_port="$APP_HOST_PORT"
   local rmq_mgmt_port=15672
   local rmq_amqp_port=5672
   local redis_port="${REDIS_HOST_PORT:-6379}"
@@ -164,12 +195,12 @@ print_endpoints() {
   if [[ -f "$env_file" ]]; then
     # shellcheck disable=SC1090
     set -a; source "$env_file"; set +a
-    app_port="${SERVICE_PORT:-$app_port}"
+    app_port="${APP_HOST_PORT:-$app_port}"
     redis_port="${REDIS_HOST_PORT:-${REDIS_PORT:-$redis_port}}"
     mysql_port="${MYSQL_HOST_PORT:-${MYSQL_PORT:-$mysql_port}}"
   fi
 
-  echo "  App:       http://${host}:${app_port}"
+  echo "  App:       http://${host}:${app_port} -> container:${SERVICE_PORT}"
   echo "  RabbitMQ:  http://${host}:${rmq_mgmt_port} (mgmt), amqp://${host}:${rmq_amqp_port} (AMQP)"
   echo "  Redis:     redis://${host}:${redis_port}"
   echo "  MySQL:     ${host}:${mysql_port}"
@@ -253,8 +284,8 @@ case "$command" in
     ;;
   *)
     echo "Unknown command: $command" >&2; exit 1 ;;
-esac
+ esac
 
-echo "Done."
+ echo "Done."
 
 

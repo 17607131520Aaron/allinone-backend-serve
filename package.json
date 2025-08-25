@@ -11,7 +11,6 @@
     "dev": "NODE_ENV=development nest start --watch",
     "dev:test": "NODE_ENV=test nest start --watch",
     "dev:production": "NODE_ENV=production nest start --watch",
-    "dev:staging": "NODE_ENV=staging nest start --watch",
     "lint": "eslint . --fix"
   },
   "dependencies": {

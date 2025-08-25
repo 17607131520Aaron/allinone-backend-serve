@@ -8,9 +8,10 @@ services:
         SERVICE_PORT: ${SERVICE_PORT:-9000} # 从环境变量中读取，默认值为 9000
     image: ${IMAGE_NAME} # 使用外部传递的镜像名称  # 动态设置镜像名称
     ports:
-      - '${SERVICE_PORT:-9000}:${SERVICE_PORT:-9000}' # 设置默认值为 9000
+      - '${APP_HOST_PORT:-9000}:${SERVICE_PORT:-9000}' # 主机端口可独立于容器端口
     environment:
       NODE_ENV: ${NODE_ENV:-production} # 从外部环境变量中读取，默认值为 production
+      SERVICE_PORT: ${SERVICE_PORT:-9000}
       RABBITMQ_HOST: rabbitmq # RabbitMQ主机地址
       RABBITMQ_PORT: 5672 # RabbitMQ端口
       RABBITMQ_USERNAME: guest # RabbitMQ用户名
