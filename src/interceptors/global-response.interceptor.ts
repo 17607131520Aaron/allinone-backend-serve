@@ -9,19 +9,9 @@ export class GlobalResponseWrapperInterceptor implements NestInterceptor {
   public intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       map((data: unknown) => {
-        if (
-          data &&
-          typeof data === 'object' &&
-          (data as Record<string, unknown>).code !== undefined &&
-          (data as Record<string, unknown>).data !== undefined
-        ) {
-          // Already wrapped by another layer
-          return data;
-        }
-        const payload = typeof data === 'undefined' ? true : data;
         return {
           code: this.defaultSuccessCode ?? 0,
-          data: payload,
+          data: data ?? true,
           message: 'success',
         };
       }),
